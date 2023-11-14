@@ -2,7 +2,6 @@ package jax.spring.desker.task;
 
 import jax.spring.desker.service.ReservationService;
 import org.apache.commons.configuration2.FileBasedConfiguration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.ConfigurationBuilder;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.Logger;
@@ -27,7 +26,7 @@ public class ReservationTask {
         reservationService.reserve();
     }
 
-    //@Scheduled(cron = "*/3 * * * * *")
+    //@Scheduled(cron = "*/1 * * * * *")
     public void recurrent() throws ConfigurationException {
         LOG.info("recurrent assetId {}", configurationBuilder.getConfiguration().getString("reservation.asset.id"));
     }
