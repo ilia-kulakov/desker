@@ -20,7 +20,7 @@ public class ReservationTask {
     @Autowired
     private ReservationService reservationService;
 
-    @Scheduled(cron = "0 1,3,5,7 0 * * *")
+    @Scheduled(cron = "${jax.spring.desker.reservation.scheduler.cron}")
     public void reserve() {
         LOG.info("Reservation Task is starting");
         reservationService.reserve();
