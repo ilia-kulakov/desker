@@ -2,10 +2,11 @@ package jax.spring.desker.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import jax.spring.desker.model.Booking;
+import jax.spring.desker.model.BookingModel;
+import jax.spring.desker.model.SettingsModel;
 import jax.spring.desker.service.ReservationService;
+import jax.spring.desker.service.ReservationSettingsService;
 import org.apache.commons.configuration2.FileBasedConfiguration;
-import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.apache.commons.configuration2.builder.ConfigurationBuilder;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class ReservationServiceImpl implements ReservationService {
     private static final String RESERVATION_DATE_FORMAT = "yyyy-MM-dd";
 
     @Autowired
-    private ConfigurationBuilder<FileBasedConfiguration> configurationBuilder;
+    private ReservationSettingsService reservationSettingsService;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -48,20 +49,15 @@ public class ReservationServiceImpl implements ReservationService {
     public void reserve() {
         try {
             LOG.info("Reserve desk");
-            ImmutableConfiguration config = configurationBuilder.getConfiguration();
-            String url = config.getString("reservation.url");
-            String cookie = config.getString("reservation.cookie");
-            String assetId = config.getString("reservation.asset.id");
-            String partyId = config.getString("reservation.party.id");
-            int shiftDays = config.getInt("reservation.shift.days");
+            SettingsModel settings = reservationSettingsService.getSettings();
 
             Calendar reservationDate = Calendar.getInstance();
-            reservationDate.add(Calendar.DATE, shiftDays);
+            reservationDate.add(Calendar.DATE, settings.getShiftDays());
 
-            Booking booking = buildBooking(assetId, partyId, reservationDate.getTime());
-            String payload = objectMapper.writeValueAsString(booking);
+            BookingModel bookingModel = buildBooking(settings.getAssetId(), settings.getPartyId(), reservationDate.getTime());
+            String payload = objectMapper.writeValueAsString(bookingModel);
             LOG.info("Request Payload " + payload);
-            ResponseEntity<String>  response = post(url, cookie, payload);
+            ResponseEntity<String>  response = post(settings.getUrl(), settings.getCookie(), payload);
             LOG.info("Response status code " + response.getStatusCode());
             if(response.getStatusCode().is2xxSuccessful()) {
                 LOG.info("Response body:");
@@ -85,33 +81,33 @@ public class ReservationServiceImpl implements ReservationService {
                 String.class);
     }
 
-    private Booking buildBooking(String assetId, String partyId, Date date) {
-        return Booking.builder()
+    private BookingModel buildBooking(String assetId, String partyId, Date date) {
+        return BookingModel.builder()
                 .reservation(
-                        Booking.Reservation.builder()
+                        BookingModel.Reservation.builder()
                                 .comment(Strings.EMPTY)
                                 .type(RESERVATION_TYPE)
                                 .reason(RESERVATION_REASON)
-                                .start(Booking.Reservation.Moment.builder()
+                                .start(BookingModel.Reservation.Moment.builder()
                                         .date(date)
                                         .time(RESERVATION_START_TIME)
                                         .build())
-                                .end(Booking.Reservation.Moment.builder()
+                                .end(BookingModel.Reservation.Moment.builder()
                                         .date(date)
                                         .time(RESERVATION_END_TIME)
                                         .build())
-                                .assets(Collections.singletonList(Booking.Reservation.Asset.builder()
+                                .assets(Collections.singletonList(BookingModel.Reservation.Asset.builder()
                                                 .assetId(assetId)
                                                 .assetType(RESERVATION_ASSET_TYPE)
                                                 .partyId(partyId)
                                                 .build()))
-                                .parties(Collections.singletonList(Booking.Reservation.Party.builder()
+                                .parties(Collections.singletonList(BookingModel.Reservation.Party.builder()
                                                 .partyType(RESERVATION_PARTY_TYPE)
                                                 .partyId(partyId)
                                                 .build()))
                                 .build()
                 )
-                .flags(Booking.Flag.builder()
+                .flags(BookingModel.Flag.builder()
                         .cancelConflicting(false)
                         .checkin(false)
                         .build())

@@ -1,6 +1,5 @@
 package jax.spring.desker.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Value;
 
@@ -9,7 +8,7 @@ import java.util.List;
 
 @Value
 @Builder
-public class Booking {
+public class BookingModel {
 
     Reservation reservation;
     Flag flags;
