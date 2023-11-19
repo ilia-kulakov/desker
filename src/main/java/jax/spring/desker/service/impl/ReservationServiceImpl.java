@@ -6,8 +6,7 @@ import jax.spring.desker.model.BookingModel;
 import jax.spring.desker.model.SettingsModel;
 import jax.spring.desker.service.ReservationService;
 import jax.spring.desker.service.ReservationSettingsService;
-import org.apache.commons.configuration2.FileBasedConfiguration;
-import org.apache.commons.configuration2.builder.ConfigurationBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public void reserve() {
+    public String reserve() {
         try {
             LOG.info("Reserve desk");
             SettingsModel settings = reservationSettingsService.getSettings();
@@ -59,14 +58,16 @@ public class ReservationServiceImpl implements ReservationService {
             LOG.info("Request Payload " + payload);
             ResponseEntity<String>  response = post(settings.getUrl(), settings.getCookie(), payload);
             LOG.info("Response status code " + response.getStatusCode());
-            if(response.getStatusCode().is2xxSuccessful()) {
+            if(StringUtils.isNoneBlank(response.getBody())) {
                 LOG.info("Response body:");
                 LOG.info(response.getBody());
+                return response.getBody();
             }
         } catch (Exception e) {
             LOG.error("An error occurred during the reservation", e);
         }
 
+        return "{'error': 'An error occurred during the reservation'}";
     }
 
     private ResponseEntity<String> post(String url, String cookie, String payload) {
