@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class ReservationReservationSettingsServiceImpl implements ReservationSettingsService {
 
     private static final String URL_PROPERTY_NAME = "reservation.url";
-    private static final String ASSET_ID_PROPERTY_NAME = "reservation.asset.id";
+    private static final String ASSET_ID_PROPERTY_NAME = "reservation.asset.ids";
     private static final String PARTY_ID_PROPERTY_NAME = "reservation.party.id";
     private static final String SHIFT_DAYS_PROPERTY_NAME = "reservation.shift.days";
     private static final String COOKIE_PROPERTY_NAME = "reservation.cookie";
@@ -25,7 +25,7 @@ public class ReservationReservationSettingsServiceImpl implements ReservationSet
         FileBasedConfiguration config = configurationBuilder.getConfiguration();
         return SettingsModel.builder()
                 .url(config.getString(URL_PROPERTY_NAME))
-                .assetId(config.getString(ASSET_ID_PROPERTY_NAME))
+                .assetIds(config.getList(String.class, ASSET_ID_PROPERTY_NAME))
                 .partyId(config.getString(PARTY_ID_PROPERTY_NAME))
                 .shiftDays(config.getInt(SHIFT_DAYS_PROPERTY_NAME))
                 .cookie(config.getString(COOKIE_PROPERTY_NAME))
@@ -36,7 +36,7 @@ public class ReservationReservationSettingsServiceImpl implements ReservationSet
     public void saveSettings(@NonNull SettingsModel settings) throws ConfigurationException {
         FileBasedConfiguration config = configurationBuilder.getConfiguration();
         config.setProperty(URL_PROPERTY_NAME, settings.getUrl());
-        config.setProperty(ASSET_ID_PROPERTY_NAME, settings.getAssetId());
+        config.setProperty(ASSET_ID_PROPERTY_NAME, settings.getAssetIds());
         config.setProperty(PARTY_ID_PROPERTY_NAME, settings.getPartyId());
         config.setProperty(SHIFT_DAYS_PROPERTY_NAME, settings.getShiftDays());
         config.setProperty(COOKIE_PROPERTY_NAME, settings.getCookie());

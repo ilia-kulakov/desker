@@ -5,6 +5,7 @@ import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.convert.DefaultListDelimiterHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -31,7 +32,8 @@ public class ReservationConfiguration {
         return new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
                 .configure(new Parameters()
                         .fileBased()
-                        .setFile(new File(path)));
+                        .setFile(new File(path))
+                        .setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
     }
 
 }

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,24 +40,25 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private int seatNo;
+
     @PostConstruct
     public void init() {
         objectMapper.setDateFormat(new SimpleDateFormat(RESERVATION_DATE_FORMAT));
+        seatNo = 0;
     }
 
-    @Override
-    public String reserve() {
+    private String reserve(@NonNull String url,
+                          @NonNull String partyId,
+                          @NonNull String assertId,
+                          @NonNull Calendar date,
+                          @NonNull String cookie) {
         try {
             LOG.info("Reserve desk");
-            SettingsModel settings = reservationSettingsService.getSettings();
-
-            Calendar reservationDate = Calendar.getInstance();
-            reservationDate.add(Calendar.DATE, settings.getShiftDays());
-
-            BookingModel bookingModel = buildBooking(settings.getAssetId(), settings.getPartyId(), reservationDate.getTime());
+            BookingModel bookingModel = buildBooking(assertId, partyId, date.getTime());
             String payload = objectMapper.writeValueAsString(bookingModel);
             LOG.info("Request Payload " + payload);
-            ResponseEntity<String>  response = post(settings.getUrl(), settings.getCookie(), payload);
+            ResponseEntity<String>  response = post(url, cookie, payload);
             LOG.info("Response status code " + response.getStatusCode());
             if(StringUtils.isNoneBlank(response.getBody())) {
                 LOG.info("Response body:");
@@ -68,6 +70,35 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         return "{'error': 'An error occurred during the reservation'}";
+    }
+
+    @Override
+    public String reserve() {
+        try {
+            SettingsModel settings = reservationSettingsService.getSettings();
+            Calendar reservationDate = Calendar.getInstance();
+            reservationDate.add(Calendar.DATE, settings.getShiftDays());
+            int seatIndex = seatNo % settings.getAssetIds().size();
+
+            return reserve(
+                    settings.getUrl(),
+                    settings.getPartyId(),
+                    settings.getAssetIds().get(seatIndex),
+                    reservationDate,
+                    settings.getCookie());
+        } catch (Exception e) {
+            LOG.error("An error occurred during the reservation", e);
+        }
+
+        return "{'error': 'An error occurred during the reservation'}";
+    }
+
+    public void nextSeat() {
+        seatNo++;
+    }
+
+    public void firstSeat() {
+        seatNo = 0;
     }
 
     private ResponseEntity<String> post(String url, String cookie, String payload) {
