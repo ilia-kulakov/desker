@@ -40,12 +40,9 @@ public class ReservationServiceImpl implements ReservationService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private int seatNo;
-
     @PostConstruct
     public void init() {
         objectMapper.setDateFormat(new SimpleDateFormat(RESERVATION_DATE_FORMAT));
-        seatNo = 0;
     }
 
     private String reserve(@NonNull String url,
@@ -78,27 +75,24 @@ public class ReservationServiceImpl implements ReservationService {
             SettingsModel settings = reservationSettingsService.getSettings();
             Calendar reservationDate = Calendar.getInstance();
             reservationDate.add(Calendar.DATE, settings.getShiftDays());
-            int seatIndex = seatNo % settings.getAssetIds().size();
 
-            return reserve(
-                    settings.getUrl(),
-                    settings.getPartyId(),
-                    settings.getAssetIds().get(seatIndex),
-                    reservationDate,
-                    settings.getCookie());
+            for(int i = 0; i < settings.getAssetIds().size(); i++) {
+                String response = reserve(
+                        settings.getUrl(),
+                        settings.getPartyId(),
+                        settings.getAssetIds().get(i),
+                        reservationDate,
+                        settings.getCookie());
+
+                if(StringUtils.containsAny(response, RESPONSE_SUCCESS, RESPONSE_BOOKING_ALREADY_PRESENT)) {
+                    return response;
+                }
+            }
         } catch (Exception e) {
             LOG.error("An error occurred during the reservation", e);
         }
 
         return "{'error': 'An error occurred during the reservation'}";
-    }
-
-    public void nextSeat() {
-        seatNo++;
-    }
-
-    public void firstSeat() {
-        seatNo = 0;
     }
 
     private ResponseEntity<String> post(String url, String cookie, String payload) {
